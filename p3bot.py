@@ -44,6 +44,9 @@ class IrcCommand:
   _user_pat = re.compile(r'^:([^! ]+)(!([^@ ]+)(@([^ ]+))?)? *$')
 
   def __init__(self, cmd_str):
+    self._user = None
+    self._cmd_name = None
+    self._params = []
     self._parse_cmd_str(cmd_str)
 
   def __str__(self):
@@ -68,8 +71,6 @@ class IrcCommand:
     self._parse_params(m.group(3))
 
   def _parse_params(self, params_str):
-    self._params = []
-
     if params_str != None:
       m = IrcCommand._params_pat.match(params_str)
       if m != None:
@@ -145,12 +146,11 @@ if __name__ == '__main__':
     src = SocketIrcCommandSource(s)
     while True:
       cmd = src.next()
-      print cmd
+      
       if cmd.get_cmd_name() == 'PING':
         print 'Ping received!'
-        s.sendall('PONG %s\r\n' % cmd[2][0])
+        s.sendall('PONG %s\r\n' % cmd.get_param(0))
       else:
-        print cmd.get_cmd_name()
         for script in scripts:
           resp = script.handle(cmd)
           if resp != None:
