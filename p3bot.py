@@ -8,9 +8,9 @@ import imp
 
 HOST = 'irc.freenode.net'
 PORT = 8001
-NICK = 'p3bot_dev'
-USERNAME = 'p3bot_dev'
-REALNAME = 'Plugtree Bot Development'
+NICK = 'p3bot'
+USERNAME = 'p3bot'
+REALNAME = 'Plugtree Bot'
 CHANNEL = '#plugtree'
 SCRIPTSDIR = 'scripts'
 
