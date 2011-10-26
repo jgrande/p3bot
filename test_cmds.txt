@@ -1,0 +1,1 @@
+:test_nick!test_user@test_host TESTCMD #test_channel test_param :this is a test message
