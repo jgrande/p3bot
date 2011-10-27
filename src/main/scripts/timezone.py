@@ -61,23 +61,4 @@ class TimeZoneScript:
         return '%s, %s' % (cmd.get_user().get_nick(), desttime.strftime('%I:%M %p %Z'))
 
     return None
-
-if __name__ == '__main__':
-  init('bot')
-  print 'Running tests...'
-  script = TimeZoneScript('bot')
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot,convertime 3:30am pdt a abc')) == 'person, no conozco el huso horario ABC'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot,convertime 3:30am abc a local')) == 'person, no conozco el huso horario ABC'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot,convertime 93:30am pdt a local')) == 'person, no entiendo la hora, hour must be in 0..23'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot,convertime 2:30am pdt a local')) == 'person, 06:30 AM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot,convertime 2:30 am pdt a local')) == 'person, 06:30 AM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot, convertime 2:30 am pdt a local')) == 'person, 06:30 AM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot convertime 2:30 am pdt a local')) == 'person, 06:30 AM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot convertime 2:30 am PDT a local')) == 'person, 06:30 AM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot convertime 2:30 AM PDT a local')) == 'person, 06:30 AM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot convertime 2:30 PM PDT a local')) == 'person, 06:30 PM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot convertime 14:30 PDT a local')) == 'person, 06:30 PM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot convertime 14:30 EDT a local')) == 'person, 03:30 PM ART'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot convertime 14:30 local a PDT')) == 'person, 10:30 AM PDT'
-  print 'Tests OK'
   

@@ -32,11 +32,3 @@ class PortenseBienScript:
         return 'chicos, portense bien'
     return None
 
-if __name__ == '__main__':
-  init('bot')
-  print 'Running tests...'
-  script = PortenseBienScript('bot')
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot, deciles que se porten bien')) == 'chicos, portense bien'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :bot,deciles que se porten bien')) == 'chicos, portense bien'
-  print 'Tests OK'
-

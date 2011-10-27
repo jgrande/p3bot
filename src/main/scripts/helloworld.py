@@ -33,15 +33,3 @@ class HelloWorldScript:
 
     return None
 
-if __name__ == '__main__':
-  init('bot')
-  print 'Running tests...'
-  script = HelloWorldScript('bot')
-  assert script.handle(IrcCommand(':person PRIVMSG #test :hola bot')) == 'hola person'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :hello bot')) == 'hello person'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :Hola bot')) == 'hola person'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :Hello bot')) == 'hello person'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :HOLA bot')) == 'hola person'
-  assert script.handle(IrcCommand(':person PRIVMSG #test :HELLO bot')) == 'hello person'
-  print 'Tests OK'
-
