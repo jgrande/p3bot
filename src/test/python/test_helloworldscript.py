@@ -31,6 +31,3 @@ class TestHelloWorldScript(unittest.TestCase):
     self.assertEqual('hola person', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :HOLA bot')))
     self.assertEqual('hello person', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :HELLO bot')))
 
-if __name__ == '__main__':
-    unittest.main()
-

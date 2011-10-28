@@ -38,6 +38,3 @@ class TestTimeZoneScript(unittest.TestCase):
      self.assertEqual('person, 03:30 PM ART', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :bot convertime 14:30 EDT a local')))
      self.assertEqual('person, 10:30 AM PDT', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :bot convertime 14:30 local a PDT')))
 
-if __name__=='__main__':
-    unittest.main()
-

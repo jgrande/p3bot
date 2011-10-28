@@ -28,6 +28,3 @@ class TestPortenseBienScript(unittest.TestCase):
     self.assertEqual('chicos, portense bien', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :bot,deciles que se porten bien')))
     self.assertEqual('chicos, portense bien', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :bot deciles que se porten bien')))
 
-if __name__ == '__main__':
-    unittest.main()
-

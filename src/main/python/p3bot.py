@@ -19,16 +19,15 @@ import socket
 import re
 import os
 import imp
+import scripts
 
 HOST = 'irc.freenode.net'
 PORT = 8001
-NICK = 'p3bot'
-USERNAME = 'p3bot'
-REALNAME = 'Plugtree Bot'
+NICK = 'p3bot_dev'
+USERNAME = 'p3bot_dev'
+REALNAME = 'Plugtree Bot Dev'
 CHANNEL = '#plugtree'
 SCRIPTSDIR = 'scripts'
-
-scripts = []
 
 class IrcUser:
 
@@ -88,7 +87,7 @@ class IrcCommand:
     if params_str != None:
       m = IrcCommand._params_pat.match(params_str)
       if m != None:
-        # TODO ver qué pasa con split y tabs, etc
+        # TOFIX maybe this is splitting not only on spaces, but on tabs and so
         if m.group(1) != None:
           self._params = m.group(1).split()
         if m.group(4) != None:
@@ -133,44 +132,67 @@ class SocketIrcCommandSource(IrcCommandSource):
 
     return IrcCommand(self._lines.pop(0).rstrip())
 
-def load_scripts():
-  # TODO usar endsWith
-  filenames = [ fn for fn in os.listdir(SCRIPTSDIR) if fn[-3:]=='.py' ]
-  for fn in filenames:
-    module = imp.load_source(fn[:-3], '%s/%s'%(SCRIPTSDIR,fn))
-    script = module.init(NICK)
-    scripts.append(script)
-    print 'Script %s initialized' % fn
+class ScriptsLoader:
+
+  def __init__(self, pkg):
+    self.scripts = []
+    self.pkg = pkg
+
+  def load_scripts(self):
+    # TODO all scripts should be called <anything>_script.py
+    filenames = [ fn for fn in os.listdir(self.pkg.__path__[0]) if not fn.startswith('__') and fn.endswith('.py') ]
+    for fn in filenames:
+      t = imp.find_module(fn[:-3], self.pkg.__path__)
+      try:
+        module = imp.load_module(fn[:-3], t[0], t[1], t[2])
+        script = module.init(NICK)
+        self.scripts.append(script)
+        print 'Script %s loaded' % fn
+      except ImportError as err:
+        print 'Error loading script %s: %s' % (fn, err)
+      finally:
+        t[0].close()
+
+  def clear_scripts(self):
+    for m in self.scripts:
+      del m
+    self.scripts = []
+
+  def __iter__(self):
+    return self.scripts.__iter__()
   
-if __name__ == '__main__':
-  load_scripts()
-  
-  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  s.connect((HOST, PORT))
-  print 'Connected, registering connection...'
-  
-  s.sendall('NICK %s\r\n' % NICK)
-  s.sendall('USER %s a b :%s\r\n' % (USERNAME, REALNAME))
-  print 'Connection successfully registered'
-  
-  s.sendall('JOIN %s\r\n' % CHANNEL)
-  print 'Channel %s successfully joined' % CHANNEL
-  
-  try:
-    src = SocketIrcCommandSource(s)
-    while True:
-      cmd = src.next()
-      
-      if cmd.get_cmd_name() == 'PING':
-        print 'Ping received!'
-        s.sendall('PONG %s\r\n' % cmd.get_param(0))
-      else:
-        for script in scripts:
-          resp = script.handle(cmd)
-          if resp != None:
-            s.sendall('PRIVMSG %s :%s\r\n' % (CHANNEL, resp))
+class P3Bot:
+
+  def run(self):
+    loader = ScriptsLoader(scripts)
+    loader.load_scripts()
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+    print 'Connected, registering connection...'
+    
+    s.sendall('NICK %s\r\n' % NICK)
+    s.sendall('USER %s a b :%s\r\n' % (USERNAME, REALNAME))
+    print 'Connection successfully registered'
+    
+    s.sendall('JOIN %s\r\n' % CHANNEL)
+    print 'Channel %s successfully joined' % CHANNEL
+    
+    try:
+      src = SocketIrcCommandSource(s)
+      while True:
+        cmd = src.next()
         
-  finally:
-    print 'Closing connection'
-    s.close()
+        if cmd.get_cmd_name() == 'PING':
+          print 'Ping received!'
+          s.sendall('PONG %s\r\n' % cmd.get_param(0))
+        else:
+          for script in loader:
+            resp = script.handle(cmd)
+            if resp != None:
+              s.sendall('PRIVMSG %s :%s\r\n' % (CHANNEL, resp))
+          
+    finally:
+      print 'Closing connection'
+      s.close()
   

@@ -16,6 +16,9 @@
 
 from p3bot import *
 import unittest
+import shutil
+import os
+import test_scripts
 
 class TestP3Bot(unittest.TestCase):
 
@@ -51,6 +54,36 @@ class TestP3Bot(unittest.TestCase):
     self.assertEqual(None, cmd.get_user().get_user())
     self.assertEqual(None, cmd.get_user().get_host())
 
-if __name__ == '__main__':
-    unittest.main()
+  def test_load_scripts(self):
+    loader = ScriptsLoader(test_scripts)
+    self.assertEqual(0, len(loader.scripts))
+    loader.load_scripts()
+    self.assertEqual(2, len(loader.scripts))
+    self.assertEqual('script1', loader.scripts[0].handle(None))
+    self.assertEqual('script2', loader.scripts[1].handle(None))
+
+  def test_reload_scripts(self):
+    try:
+      loader = ScriptsLoader(test_scripts)
+      self.assertEqual(0, len(loader.scripts))
+      loader.load_scripts()
+      self.assertEqual(2, len(loader.scripts))
+      
+      shutil.copyfile('test_scripts/script3.py.a', 'test_scripts/script3.py')
+      loader.clear_scripts()
+      loader.load_scripts()
+      self.assertEqual(3, len(loader.scripts))
+      self.assertTrue('script3.a' in [s.handle(None) for s in loader.scripts])
+      self.assertTrue('script3.b' not in [s.handle(None) for s in loader.scripts])
+
+      shutil.copyfile('test_scripts/script3.py.b', 'test_scripts/script3.py')
+      os.remove('test_scripts/script3.pyc')
+      loader.clear_scripts()
+      loader.load_scripts()
+      self.assertEqual(3, len(loader.scripts))
+      self.assertTrue('script3.a' not in [s.handle(None) for s in loader.scripts])
+      self.assertTrue('script3.b' in [s.handle(None) for s in loader.scripts])
+    finally:
+      if os.path.exists('test_scripts/script3.py'):
+        os.remove('test_scripts/script3.py')
 
