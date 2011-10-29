@@ -20,10 +20,10 @@ import dateutil.parser
 import datetime
 from p3bot import *
 
-_TZS = { 'PDT': dateutil.tz.gettz('US/Pacific'),
-         'EDT': dateutil.tz.gettz('US/Eastern'),
-         'MDT': dateutil.tz.gettz('US/Mountain'),
-         'CDT': dateutil.tz.gettz('US/Central'),
+_TZS = { 'PST': dateutil.tz.gettz('US/Pacific'),
+         'EST': dateutil.tz.gettz('US/Eastern'),
+         'MST': dateutil.tz.gettz('US/Mountain'),
+         'CST': dateutil.tz.gettz('US/Central'),
          'LOCAL': dateutil.tz.gettz('America/Argentina/Buenos Aires'),
        }
 
