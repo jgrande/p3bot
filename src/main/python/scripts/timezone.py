@@ -27,38 +27,34 @@ _TZS = { 'PST': dateutil.tz.gettz('US/Pacific'),
          'LOCAL': dateutil.tz.gettz('America/Argentina/Buenos Aires'),
        }
 
-def init(nick):
+def init(bot):
   print 'Initializing script timezone.py'
-  return TimeZoneScript(nick)
+  return TimeZoneScript(bot)
 
 class TimeZoneScript:
-  def __init__(self, nick):
-    self._pat = re.compile('^%s[, ]? *CONVERTIME +(\\d?\\d:\\d?\\d( ?[AP]M)? ([^ ]+)) +A +([^ ]+)$' % nick.upper())
+  def __init__(self, bot):
+    self._pat = re.compile('^%s[, ]? *CONVERTIME +(\\d?\\d(:\\d?\\d)?( ?[AP]M)? ([^ ]+)) +A +([^ ]+)$' % bot.get_nick().upper())
 
-  def handle(self, cmd):
-    if cmd.get_cmd_name() == 'PRIVMSG':
-      m = self._pat.match(cmd.get_param(1).upper())
-      if m != None:
-        time_str = m.group(1)
-        origtz = m.group(3)
-        desttz = m.group(4)
+  def execute(self, src, msg):
+    m = self._pat.match(msg.upper())
+    if m != None:
+      time_str = m.group(1)
+      origtz = m.group(4)
+      desttz = m.group(5)
+      
+      if origtz not in _TZS:
+        return '%s, no conozco el huso horario %s' % (src, origtz)
         
-        if origtz not in _TZS:
-          return '%s, no conozco el huso horario %s' % (cmd.get_user().get_nick(), origtz)
-          
-        if desttz not in _TZS:
-          return '%s, no conozco el huso horario %s' % (cmd.get_user().get_nick(), desttz)
-        
-        try:
-          time = dateutil.parser.parse(time_str, tzinfos=_TZS)
-        except ValueError as e:
-          return '%s, no entiendo la hora, %s' % (cmd.get_user().get_nick(), e)
-        
-        if time == None:
-          return 'No entiendo la hora %s' % time_str
-        
-        desttime = time.astimezone(_TZS[desttz])
-        return '%s, %s' % (cmd.get_user().get_nick(), desttime.strftime('%I:%M %p %Z'))
+      if desttz not in _TZS:
+        return '%s, no conozco el huso horario %s' % (src, desttz)
+      
+      try:
+        time = dateutil.parser.parse(time_str, tzinfos=_TZS)
+      except ValueError as e:
+        return '%s, no pude leer la hora, %s' % (src, e)
+      
+      desttime = time.astimezone(_TZS[desttz])
+      return '%s, %s' % (src, desttime.strftime('%I:%M %p %Z'))
 
     return None
   

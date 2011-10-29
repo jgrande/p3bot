@@ -166,6 +166,7 @@ class P3Bot:
     self._realname = realname
     self._s = socket
     self._channel = None
+    self._mynamepat = re.compile('(.*[, ])?%s([, ].*)?' % self._nick.lower())
 
   def connect(self, host, port):
     if self._s == None:
@@ -218,9 +219,12 @@ class P3Bot:
   def get_cmd_src(self):
     return SocketIrcCommandSource(self._s)
 
+  def get_nick(self):
+    return self._nick
+
   def run(self):
     loader = ScriptsLoader(scripts)
-    loader.load_scripts(self._nick)
+    loader.load_scripts(self)
     
     self.connect(HOST, PORT)
     self.join(CHANNEL)
@@ -231,13 +235,19 @@ class P3Bot:
         cmd = src.next()
         
         if cmd.get_cmd_name() == 'PING':
-          print 'Ping received!'
-          self.send_pong(cmd.get_param(0))
-        else:
-          for script in loader:
-            resp = script.handle(cmd)
-            if resp != None:
-              self.send_msg(resp, cmd.get_param(0))
+          self.pong(cmd.get_param(0))
+        elif cmd.get_cmd_name() == 'PRIVMSG':
+          print cmd
+          msg = cmd.get_param(1)
+          if self._mynamepat.match(msg.lower()) != None:
+            for script in loader:
+              resp = script.execute(cmd.get_user().get_nick(), msg)
+              if resp!=None:
+                if cmd.get_param(0)==self._nick:
+                  target = cmd.get_user().get_nick()
+                else:
+                  target = self._channel
+                self.send_msg(resp, target)
           
     finally:
       print 'Closing connection'

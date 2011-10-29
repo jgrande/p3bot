@@ -16,15 +16,16 @@
 
 import scripts.portensebien
 import p3bot
-import unittest
+import p3bot_testcase
 
-class TestPortenseBienScript(unittest.TestCase):
+class TestPortenseBienScript(p3bot_testcase.P3BotTestCase):
 
   def setUp(self):
-    self._script = scripts.portensebien.init('bot')
+    p3bot_testcase.P3BotTestCase.setUp(self)
+    self._script = scripts.portensebien.init(self.bot)
 
   def test_basic(self):
-    self.assertEqual('chicos, portense bien', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :bot, deciles que se porten bien')))
-    self.assertEqual('chicos, portense bien', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :bot,deciles que se porten bien')))
-    self.assertEqual('chicos, portense bien', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :bot deciles que se porten bien')))
+    self.assertEqual('chicos, portense bien', self._script.execute('person', 'bot, deciles que se porten bien'))
+    self.assertEqual('chicos, portense bien', self._script.execute('person', 'bot,deciles que se porten bien'))
+    self.assertEqual('chicos, portense bien', self._script.execute('person', 'bot deciles que se porten bien'))
 

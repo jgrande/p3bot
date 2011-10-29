@@ -17,19 +17,18 @@
 import re
 from p3bot import *
 
-def init(nick):
+def init(bot):
   print 'Initializing script helloworld.py'
-  return HelloWorldScript(nick)
+  return HelloWorldScript(bot)
 
 class HelloWorldScript:
-  def __init__(self, nick):
-    self._greeting_pat = re.compile('^(HELLO|HOLA) %s$' % nick.upper())
+  def __init__(self, bot):
+    self._pat = re.compile('^(hello|hola) ([^ ,]+ *[ ,] *)*%s( *[ ,] *[^ ,]+)*.*$' % bot.get_nick().lower())
 
-  def handle(self, cmd):
-    if cmd.get_cmd_name() == 'PRIVMSG':
-      m = self._greeting_pat.match(cmd.get_param(1).upper())
-      if m != None:
-        return '%s %s' % ( m.group(1).lower(), cmd.get_user().get_nick() )
+  def execute(self, src, msg):
+    m = self._pat.match(msg.lower())
+    if m != None:
+      return '%s %s' % ( m.group(1), src )
 
     return None
 

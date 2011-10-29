@@ -16,18 +16,19 @@
 
 import scripts.helloworld
 import p3bot
-import unittest
+import p3bot_testcase
 
-class TestHelloWorldScript(unittest.TestCase):
+class TestHelloWorldScript(p3bot_testcase.P3BotTestCase):
 
   def setUp(self):
-    self._script = scripts.helloworld.init('bot')
+    p3bot_testcase.P3BotTestCase.setUp(self)
+    self._script = scripts.helloworld.init(self.bot)
 
   def test_basic(self):
-    self.assertEqual('hola person', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :hola bot')))
-    self.assertEqual('hello person', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :hello bot')))
-    self.assertEqual('hola person', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :Hola bot')))
-    self.assertEqual('hello person', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :Hello bot')))
-    self.assertEqual('hola person', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :HOLA bot')))
-    self.assertEqual('hello person', self._script.handle(p3bot.IrcCommand(':person PRIVMSG #test :HELLO bot')))
+    self.assertEqual('hola person', self._script.execute('person', 'hola bot'))
+    self.assertEqual('hello person', self._script.execute('person', 'hello bot'))
+    self.assertEqual('hola person', self._script.execute('person', 'Hola bot'))
+    self.assertEqual('hello person', self._script.execute('person', 'Hello bot'))
+    self.assertEqual('hola person', self._script.execute('person', 'HOLA bot'))
+    self.assertEqual('hello person', self._script.execute('person', 'HELLO bot'))
 

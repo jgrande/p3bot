@@ -14,21 +14,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import re
-from p3bot import *
+import unittest
+import p3bot
 
-def init(bot):
-  print 'Initializing script portensebien.py'
-  return PortenseBienScript(bot)
+class MockSocket:
 
-class PortenseBienScript:
-  def __init__(self, bot):
-    self._pat = re.compile('^%s[, ] *deciles que se porten bien$' % bot.get_nick().lower())
+  None
 
-  def execute(self, src, msg):
-    m = self._pat.match(msg.lower())
-    if m != None:
-      return 'chicos, portense bien'
-
-    return None
+class P3BotTestCase(unittest.TestCase):
+  
+  def setUp(self):
+    self.bot = p3bot.P3Bot('Test Bot', 'bot', 'user', MockSocket())
 
