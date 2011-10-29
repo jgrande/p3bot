@@ -17,8 +17,12 @@
 
 import sys
 
+NICKNAME = 'p3bot_dev'
+USERNAME = 'p3bot_dev'
+REALNAME = 'Plugtree Bot Dev'
+
 if __name__ == '__main__':
   sys.path.append('src/main/python')
   from p3bot import P3Bot
-  P3Bot().run()
+  P3Bot(REALNAME, NICKNAME, USERNAME).run()
   

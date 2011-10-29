@@ -23,11 +23,7 @@ import scripts
 
 HOST = 'irc.freenode.net'
 PORT = 8001
-NICK = 'p3bot_dev'
-USERNAME = 'p3bot_dev'
-REALNAME = 'Plugtree Bot Dev'
 CHANNEL = '#plugtree'
-SCRIPTSDIR = 'scripts'
 
 class IrcUser:
 
@@ -138,14 +134,14 @@ class ScriptsLoader:
     self.scripts = []
     self.pkg = pkg
 
-  def load_scripts(self):
+  def load_scripts(self, nick):
     # TODO all scripts should be called <anything>_script.py
     filenames = [ fn for fn in os.listdir(self.pkg.__path__[0]) if not fn.startswith('__') and fn.endswith('.py') ]
     for fn in filenames:
       t = imp.find_module(fn[:-3], self.pkg.__path__)
       try:
         module = imp.load_module(fn[:-3], t[0], t[1], t[2])
-        script = module.init(NICK)
+        script = module.init(nick)
         self.scripts.append(script)
         print 'Script %s loaded' % fn
       except ImportError as err:
@@ -163,36 +159,87 @@ class ScriptsLoader:
   
 class P3Bot:
 
-  def run(self):
-    loader = ScriptsLoader(scripts)
-    loader.load_scripts()
-    
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+  def __init__(self, realname, nick, user, host=None, socket=None):
+    self._nick = nick
+    self._user = user
+    self._host = host
+    self._realname = realname
+    self._s = socket
+    self._channel = None
+
+  def connect(self, host, port):
+    if self._s == None:
+      self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    self._s.connect((HOST, PORT))
     print 'Connected, registering connection...'
     
-    s.sendall('NICK %s\r\n' % NICK)
-    s.sendall('USER %s a b :%s\r\n' % (USERNAME, REALNAME))
+    self.send_cmd('NICK', self._nick)
+    self.send_cmd('USER', ( self._user, 'a', 'a', self._realname ) )
     print 'Connection successfully registered'
+
+  def close(self):
+    if self._s != None:
+      self._s.close()
+
+  def join(self, channel):
+    if self._channel == None:
+      self.send_cmd('JOIN', channel)
+      self._channel = channel
+    else:
+      print 'Only one channel accepted, currently connected to %s' % self._channel
+
+  def pong(self, server):
+    self.send_cmd('PONG', server)
+
+  def send_msg(self, msg, target=None):
+    if target==None:
+      target = self._channel
+
+    self.send_cmd('PRIVMSG', ( target, msg ))
+
+  def send_cmd(self, cmd, params):
+    source = ''
+    if self._nick != None:
+      source = self._nick
+      if self._user != None:
+        source = '%s!%s' % (source, self._user)
+        if self._host != None:
+          source = '%s@%s' % (source, self._host)
+      source = ':%s ' % source
+
+    if isinstance(params, str):
+      cmd = '%s %s %s\r\n' % (source, cmd, params)
+    else:
+      cmd = '%s %s %s :%s\r\n' % (source, cmd, ' '.join(params[:-1]), params[-1])
+    print 'sending command: %s' % cmd
+    self._s.sendall(cmd)
+
+  def get_cmd_src(self):
+    return SocketIrcCommandSource(self._s)
+
+  def run(self):
+    loader = ScriptsLoader(scripts)
+    loader.load_scripts(self._nick)
     
-    s.sendall('JOIN %s\r\n' % CHANNEL)
-    print 'Channel %s successfully joined' % CHANNEL
+    self.connect(HOST, PORT)
+    self.join(CHANNEL)
     
     try:
-      src = SocketIrcCommandSource(s)
+      src = self.get_cmd_src()
       while True:
         cmd = src.next()
         
         if cmd.get_cmd_name() == 'PING':
           print 'Ping received!'
-          s.sendall('PONG %s\r\n' % cmd.get_param(0))
+          self.send_pong(cmd.get_param(0))
         else:
           for script in loader:
             resp = script.handle(cmd)
             if resp != None:
-              s.sendall('PRIVMSG %s :%s\r\n' % (CHANNEL, resp))
+              self.send_msg(resp, cmd.get_param(0))
           
     finally:
       print 'Closing connection'
-      s.close()
+      self.close()
   
