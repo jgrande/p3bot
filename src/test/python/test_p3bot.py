@@ -15,12 +15,12 @@
 #   limitations under the License.
 
 from p3bot import *
-import unittest
 import shutil
 import os
 import test_scripts
+import p3bot_testcase
 
-class TestP3Bot(unittest.TestCase):
+class TestP3Bot(p3bot_testcase.P3BotTestCase):
 
   def test_IrcCommand(self):
     cmd = IrcCommand(':test_nick!test_user@test_host TESTCMD #test_channel test_param :this is a test message')
@@ -73,17 +73,35 @@ class TestP3Bot(unittest.TestCase):
       loader.clear_scripts()
       loader.load_scripts('')
       self.assertEqual(3, len(loader.scripts))
-      self.assertTrue('script3.a' in [s.handle(None) for s in loader.scripts])
-      self.assertTrue('script3.b' not in [s.handle(None) for s in loader.scripts])
+      self.assertIn('script3.a', [s.handle(None) for s in loader.scripts])
+      self.assertNotIn('script3.b', [s.handle(None) for s in loader.scripts])
 
       shutil.copyfile('test_scripts/script3.py.b', 'test_scripts/script3.py')
       os.remove('test_scripts/script3.pyc')
       loader.clear_scripts()
       loader.load_scripts('')
       self.assertEqual(3, len(loader.scripts))
-      self.assertTrue('script3.a' not in [s.handle(None) for s in loader.scripts])
-      self.assertTrue('script3.b' in [s.handle(None) for s in loader.scripts])
+      self.assertNotIn('script3.a', [s.handle(None) for s in loader.scripts])
+      self.assertIn('script3.b', [s.handle(None) for s in loader.scripts])
     finally:
       if os.path.exists('test_scripts/script3.py'):
         os.remove('test_scripts/script3.py')
+
+  def test_set_and_remove_data(self):
+    self.bot.set_data('test_script', 'test_key', None)
+    self.assertIsNone(self.bot.get_data('test_script', 'test_key'))
+    self.bot.set_data('test_script', 'test_key', 'test_data')
+    self.assertEqual('test_data', self.bot.get_data('test_script', 'test_key'))
+    self.bot.set_data('test_script', 'test_key', None)
+    self.assertIsNone(self.bot.get_data('test_script', 'test_key'))
+
+  def test_set_data_for_different_script(self):
+    try:
+      self.bot.set_data('test_script1', 'test_key', 'test_data1')
+      self.bot.set_data('test_script2', 'test_key', 'test_data2')
+      self.assertEqual('test_data1', self.bot.get_data('test_script1', 'test_key'))
+      self.assertEqual('test_data2', self.bot.get_data('test_script2', 'test_key'))
+    finally:
+      self.bot.set_data('test_script1', 'test_key', None)
+      self.bot.set_data('test_script2', 'test_key', None)
 

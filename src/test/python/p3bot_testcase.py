@@ -18,11 +18,94 @@ import unittest
 import p3bot
 
 class MockSocket:
+  def connect(self, args):
+    pass
 
-  None
+  def close(self):
+    pass
+
+  def sendall(self, data):
+    pass
+
+  def recv(self, size):
+    return None
+
+class MockShelf(dict):
+
+  def __init__(self, test):
+    dict.__init__(self)
+    self._expects = None
+    self._test = test
+
+  def close(self):
+    if self._expects != None:
+      self._test.assertEqual(0, len(self._expects), msg='%s more operations expected' % len(self._expects))
+
+  def expect_set(self, key, val):
+    if self._expects == None:
+      self._expects = []
+
+    self._expects.append(('set', key, val))
+
+  def expect_get(self, key):
+    if self._expects == None:
+      self._expects = []
+
+    self._expects.append(('get', key))
+
+  def expect_del(self, key):
+    if self._expects == None:
+      self._expects = []
+
+    self._expects.append(('del', key))
+
+  def __getitem__(self, key):
+    if self._expects != None:
+      self._test.assertTrue(len(self._expects)>0, msg='Unexpected operation')
+      next = self._expects.pop(0)
+      self._test.assertEqual('get', next[0])
+      self._test.assertEqual(key, next[1])
+    return dict.__getitem__(self, key)
+
+  def __setitem__(self, key, val):
+    if self._expects != None:
+      self._test.assertTrue(len(self._expects)>0, msg='Unexpected operation')
+      next = self._expects.pop(0)
+      self._test.assertEqual('set', next[0])
+      self._test.assertEqual(key, next[1])
+      self._test.assertEqual(val, next[2])
+    dict.__setitem__(self, key, val)
+
+  def __delitem__(self, key):
+    if self._expects != None:
+      self._test.assertTrue(len(self._expects)>0, msg='Unexpected operation')
+      next = self._expects.pop(0)
+      self._test.assertEqual('del', next[0])
+      self._test.assertEqual(key, next[1])
+    dict.__delitem__(self, key)
+
+class MockP3Bot(p3bot.P3Bot):
+
+  def __init__(self, test):
+    p3bot.P3Bot.__init__(self, 'Test Bot', 'bot', 'user', sock=MockSocket(), shelf=MockShelf(test))
+
+  def expect_set_data(self, script, key, val):
+    key = '%s/%s' % (script,key)
+    if val == None:
+      self._shelf.expect_del(key)
+    else:
+      self._shelf.expect_set(key, val)
+
+  def expect_get_data(self, script, key):
+    key = '%s/%s' % (script, key)
+    self._shelf.expect_get(key)
 
 class P3BotTestCase(unittest.TestCase):
   
   def setUp(self):
-    self.bot = p3bot.P3Bot('Test Bot', 'bot', 'user', MockSocket())
+    self.bot = MockP3Bot(self)
+
+  def tearDown(self):
+    if self.bot != None:
+      self.bot.close()
 

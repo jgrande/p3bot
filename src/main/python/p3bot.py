@@ -20,6 +20,7 @@ import re
 import os
 import imp
 import scripts
+import shelve
 
 HOST = 'irc.freenode.net'
 PORT = 8001
@@ -159,19 +160,23 @@ class ScriptsLoader:
   
 class P3Bot:
 
-  def __init__(self, realname, nick, user, host=None, socket=None):
+  def __init__(self, realname, nick, user, host=None, sock=None, shelf=None):
     self._nick = nick
     self._user = user
     self._host = host
     self._realname = realname
-    self._s = socket
+    self._s = sock
     self._channel = None
     self._mynamepat = re.compile('(.*[, ])?%s([, ].*)?' % self._nick.lower())
+    self._shelf = shelf
 
-  def connect(self, host, port):
+    if self._shelf == None:
+      self._shelf = shelve.open('bot-data')
+
     if self._s == None:
       self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+  def connect(self, host, port):
     self._s.connect((HOST, PORT))
     print 'Connected, registering connection...'
     
@@ -182,6 +187,8 @@ class P3Bot:
   def close(self):
     if self._s != None:
       self._s.close()
+    if self._shelf != None:
+      self._shelf.close()
 
   def join(self, channel):
     if self._channel == None:
@@ -219,8 +226,30 @@ class P3Bot:
   def get_cmd_src(self):
     return SocketIrcCommandSource(self._s)
 
+  def get_shelf(self):
+    return self._shelf
+
   def get_nick(self):
     return self._nick
+
+  def set_data(self, script, key, value):
+    key = '%s/%s' % (script, key)
+
+    if value != None:
+      self._shelf[key] = value
+    else:
+      try:
+        del self._shelf[key]
+      except KeyError:
+        pass
+
+  def get_data(self, script, key):
+    key = '%s/%s' % (script, key)
+
+    try:
+      return self._shelf[key]
+    except KeyError:
+      return None
 
   def run(self):
     loader = ScriptsLoader(scripts)
@@ -237,7 +266,6 @@ class P3Bot:
         if cmd.get_cmd_name() == 'PING':
           self.pong(cmd.get_param(0))
         elif cmd.get_cmd_name() == 'PRIVMSG':
-          print cmd
           msg = cmd.get_param(1)
           if self._mynamepat.match(msg.lower()) != None:
             for script in loader:

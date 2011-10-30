@@ -25,18 +25,24 @@ if __name__=='__main__':
 
   import sys
   import unittest
-  import test_p3bot
-  import test_helloworldscript
-  import test_portensebienscript
-  import test_timezonescript
 
   suite = unittest.TestSuite()
   loader = unittest.TestLoader()
 
+  import test_p3bot
   suite.addTests(loader.loadTestsFromTestCase(test_p3bot.TestP3Bot))
+
+  import test_timezonescript
   suite.addTests(loader.loadTestsFromTestCase(test_timezonescript.TestTimeZoneScript))
+
+  import test_portensebienscript
   suite.addTests(loader.loadTestsFromTestCase(test_portensebienscript.TestPortenseBienScript))
+
+  import test_helloworldscript
   suite.addTests(loader.loadTestsFromTestCase(test_helloworldscript.TestHelloWorldScript))
+
+  import test_autoresponsescript
+  suite.addTests(loader.loadTestsFromTestCase(test_autoresponsescript.TestAutoResponseScript))
 
   unittest.TextTestRunner(verbosity=2).run(suite)
   
